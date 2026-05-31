@@ -14,6 +14,13 @@ describe("resolveConfig — auth modes", () => {
     expect(c.headers["User-Agent"]).toMatch(/^scholar-sidekick-cli\//);
   });
 
+  it("always sends the X-Scholar-Client trusted-client handshake header", () => {
+    for (const over of [{}, { rapidapiKey: "rk" }, { apiKey: "sk" }]) {
+      const c = resolveConfig(over, EMPTY);
+      expect(c.headers["X-Scholar-Client"]).toMatch(/^scholar-sidekick-cli\/\d/);
+    }
+  });
+
   it("uses RapidAPI mode + host when a rapidapi key is given (flag wins)", () => {
     const c = resolveConfig({ rapidapiKey: "rk" }, { RAPIDAPI_KEY: "envk" } as NodeJS.ProcessEnv);
     expect(c.mode).toBe("rapidapi");

@@ -73,6 +73,9 @@ export function resolveConfig(opts: GlobalOptions, env: NodeJS.ProcessEnv = proc
 
   const headers: Record<string, string> = {
     "User-Agent": `scholar-sidekick-cli/${VERSION}`,
+    // Trusted-client handshake: the API recognises any `scholar-sidekick-*` tag
+    // and grants the anonymous tier without a key (see scholar-sidekick guard.ts).
+    "X-Scholar-Client": `scholar-sidekick-cli/${VERSION}`,
   };
   if (mode === "rapidapi") {
     headers["X-RapidAPI-Key"] = rapidApiKey!;
