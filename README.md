@@ -4,6 +4,8 @@ Command-line client for [Scholar Sidekick](https://scholar-sidekick.com) — res
 
 It is a thin wrapper over the public [Scholar Sidekick REST API](https://scholar-sidekick.com/docs). **No API key is required** for the free, rate-limited tier — install and go. Add a key to raise limits and unlock paid features.
 
+![scholar CLI — verify, format, and open-access check against a live DOI](https://raw.githubusercontent.com/mlava/scholar-sidekick-cli/main/assets/preview.gif)
+
 ## Install
 
 ```bash
