@@ -1,0 +1,72 @@
+{
+  "name": "scholar-sidekick-cli",
+  "version": "0.1.0",
+  "description": "Command-line client for Scholar Sidekick — resolve any scholarly identifier (DOI, PMID, PMCID, ISBN, arXiv, ISSN, ADS, WHO IRIS) into 10,000+ CSL citation styles or nine export formats, and run retraction, open-access, and citation-verification checks, straight from your terminal.",
+  "license": "MIT",
+  "author": "Scholar Sidekick",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mlava/scholar-sidekick-cli.git"
+  },
+  "homepage": "https://scholar-sidekick.com",
+  "bugs": {
+    "url": "https://github.com/mlava/scholar-sidekick-cli/issues"
+  },
+  "keywords": [
+    "cli",
+    "command-line",
+    "citations",
+    "bibliography",
+    "academic",
+    "scholar",
+    "doi",
+    "pmid",
+    "pmcid",
+    "isbn",
+    "arxiv",
+    "issn",
+    "ads-bibcode",
+    "who-iris",
+    "bibtex",
+    "ris",
+    "csl",
+    "endnote",
+    "zotero",
+    "crossref",
+    "reference-manager",
+    "retraction",
+    "retraction-watch",
+    "open-access",
+    "unpaywall",
+    "citation-verification"
+  ],
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "scholar": "dist/cli.mjs"
+  },
+  "files": [
+    "dist/cli.mjs"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "vitest run",
+    "test:ci": "vitest run --allowOnly=false",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "commander": "^13.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@vitest/coverage-v8": "^2.1.9",
+    "esbuild": "^0.25.8",
+    "typescript": "^5.9.3",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^2.1.9"
+  }
+}

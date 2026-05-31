@@ -1,0 +1,9 @@
+src/
+test/
+scripts/
+coverage/
+.github/
+.DS_Store
+*.map
+tsconfig.json
+vitest.config.mts
