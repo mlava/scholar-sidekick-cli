@@ -86,19 +86,22 @@ The CLI works anonymously against the canonical API. To raise rate limits or use
 paid features, supply a key:
 
 ```bash
-# RapidAPI key (also switches the base URL to the RapidAPI gateway)
-scholar format 10.1016/... --rapidapi-key "$RAPIDAPI_KEY"
-export RAPIDAPI_KEY=...        # or via environment
-
-# First-party Scholar Sidekick API key
+# First-party API key (recommended) — create a free one at
+# https://scholar-sidekick.com/account; sent as `Authorization: Bearer ssk_…`
 scholar format 10.1016/... --api-key "$SCHOLAR_API_KEY"
-export SCHOLAR_API_KEY=...
+export SCHOLAR_API_KEY=ssk_...
+
+# RapidAPI key (paid/managed tiers; also switches the base URL to the gateway)
+scholar format 10.1016/... --rapidapi-key "$RAPIDAPI_KEY"
+export RAPIDAPI_KEY=...
 ```
 
-A [RapidAPI key](https://rapidapi.com/scholar-sidekick-scholar-sidekick-api/api/scholar-sidekick)
-(free tier available) is the supported way to authenticate today. The RapidAPI
-gateway exposes `format`, `export`, `verify`, `retraction`, `oa`, and `health`;
-the canonical-only commands (`format-items`, `stream`, `styles`) print a warning
+A free [first-party key](https://scholar-sidekick.com/account) (prefixed `ssk_`)
+raises your rate limit on the canonical API and works with every command. For
+paid/managed tiers, a [RapidAPI key](https://rapidapi.com/scholar-sidekick-scholar-sidekick-api/api/scholar-sidekick)
+(free BASIC tier available) routes through the RapidAPI gateway, which exposes
+`format`, `export`, `verify`, `retraction`, `oa`, and `health`; the canonical-only
+commands (`format-items`, `stream`, `styles`) print a warning under RapidAPI auth
 and should be used anonymously or with a first-party key.
 
 ### Global options

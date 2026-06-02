@@ -81,7 +81,8 @@ export function resolveConfig(opts: GlobalOptions, env: NodeJS.ProcessEnv = proc
     headers["X-RapidAPI-Key"] = rapidApiKey!;
     headers["X-RapidAPI-Host"] = rapidApiHost;
   } else if (mode === "first-party") {
-    headers["X-Scholar-API-Key"] = apiKey!;
+    // First-party keys (ssk_…, created at /account) authenticate as a Bearer token.
+    headers["Authorization"] = `Bearer ${apiKey!}`;
   }
 
   // Dev / self-host plan override (server honours it only when ALLOW_PLAN_OVERRIDE=1).

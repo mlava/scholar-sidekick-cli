@@ -10,7 +10,7 @@ describe("resolveConfig — auth modes", () => {
     expect(c.mode).toBe("anonymous");
     expect(c.baseUrl).toBe(CANONICAL_URL);
     expect(c.headers["X-RapidAPI-Key"]).toBeUndefined();
-    expect(c.headers["X-Scholar-API-Key"]).toBeUndefined();
+    expect(c.headers["Authorization"]).toBeUndefined();
     expect(c.headers["User-Agent"]).toMatch(/^scholar-sidekick-cli\//);
   });
 
@@ -38,7 +38,7 @@ describe("resolveConfig — auth modes", () => {
   it("uses first-party mode against canonical when only an api key is given", () => {
     const c = resolveConfig({}, { SCHOLAR_API_KEY: "sk" } as NodeJS.ProcessEnv);
     expect(c.mode).toBe("first-party");
-    expect(c.headers["X-Scholar-API-Key"]).toBe("sk");
+    expect(c.headers["Authorization"]).toBe("Bearer sk");
     expect(c.baseUrl).toBe(CANONICAL_URL);
   });
 
