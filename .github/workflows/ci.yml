@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    # Daily drift monitor (live-contract job below): are the `/api/*` paths this
+    # CLI's client pins still documented in the website's published OpenAPI spec?
+    - cron: "0 7 * * *"
   workflow_dispatch:
 
 permissions:
@@ -21,5 +25,25 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+      # Includes the offline endpoint-contract test: client paths == pinned list.
       - run: npm run test:ci
       - run: npm run build
+
+  live-contract:
+    name: Live OpenAPI contract (drift monitor)
+    runs-on: ubuntu-latest
+    # Monitor only — not a PR gate. It compares the LIVE published spec against
+    # the client's pinned paths, which is expected to differ right after a website
+    # change until it redeploys; gating PRs on it would couple them to deploy timing.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Compare published OpenAPI paths to the client's pinned endpoints
+        env:
+          CHECK_LIVE_CONTRACT: "1"
+        run: npx vitest run test/endpoint-contract.test.ts
