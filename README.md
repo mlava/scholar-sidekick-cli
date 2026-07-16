@@ -35,6 +35,9 @@ scholar export 10.1016/S0140-6736(26)00603-3 --format ris > refs.ris
 # Verify a citation is real (catches the "real DOI + invented title" pattern)
 scholar verify --title "Some cited title" --doi 10.1016/S0140-6736(26)00603-3
 
+# Audit a whole bibliography at once (fabrication + retraction per entry)
+scholar audit refs.bib
+
 # Check retraction / open-access status
 scholar retraction 10.1016/S0140-6736(26)00603-3
 scholar oa 10.1016/S0140-6736(26)00603-3
@@ -46,7 +49,7 @@ scholar styles harvard
 scholar health
 ```
 
-Every command accepts **multiple identifiers** (space-, comma-, or newline-separated) for batch processing, except `verify`, `retraction`, and `oa`, which take a single identifier.
+Every command accepts **multiple identifiers** (space-, comma-, or newline-separated) for batch processing, except `verify`, `retraction`, and `oa`, which take a single identifier, and `audit`, which takes a bibliography file (or stdin) rather than identifiers.
 
 ## Commands
 
@@ -58,6 +61,7 @@ Every command accepts **multiple identifiers** (space-, comma-, or newline-separ
 | `format-items` | Format pre-resolved items from `--file <json>` or stdin (a JSON array). |
 | `stream <ids...>` | Format a batch, streaming each result as it resolves (NDJSON). |
 | `verify` | Verify a claimed citation against the record at its identifier. `--title` (required) + an identifier flag. |
+| `audit [file]` | Audit a whole bibliography (BibTeX/RIS/CSL-JSON, max 25 entries; stdin if no file): per-entry fabrication check + retraction status, plus a corpus summary. `--format`, `--no-retraction`, `--fail-on-issues`. |
 | `retraction <id>` | Check retraction / correction / expression-of-concern status (Crossref / Retraction Watch). |
 | `oa <id>` | Check open-access status and best legal copy (Unpaywall). Alias: `open-access`. |
 | `styles [query]` | List available CSL citation styles (searchable, paginated). |
@@ -100,7 +104,7 @@ A free [first-party key](https://scholar-sidekick.com/account) (prefixed `ssk_`)
 raises your rate limit on the canonical API and works with every command. For
 paid/managed tiers, a [RapidAPI key](https://rapidapi.com/scholar-sidekick-scholar-sidekick-api/api/scholar-sidekick)
 (free BASIC tier available) routes through the RapidAPI gateway, which exposes
-`format`, `export`, `verify`, `retraction`, `oa`, and `health`; the canonical-only
+`format`, `export`, `verify`, `audit`, `retraction`, `oa`, and `health`; the canonical-only
 commands (`format-items`, `stream`, `styles`) print a warning under RapidAPI auth
 and should be used anonymously or with a first-party key.
 
@@ -121,7 +125,7 @@ and should be used anonymously or with a first-party key.
 | Code | Meaning |
 | --- | --- |
 | `0` | Success |
-| `1` | API returned an error (4xx/5xx), or `verify --fail-on-mismatch` and the verdict was `mismatch`/`not_found` |
+| `1` | API returned an error (4xx/5xx), `verify --fail-on-mismatch` and the verdict was `mismatch`/`not_found`, or `audit --fail-on-issues` and the corpus had a mismatch, not-found, or retracted entry |
 | `2` | Network failure or timeout |
 | `3` | Usage error (bad flags or invalid input) |
 

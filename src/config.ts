@@ -17,6 +17,7 @@ export const RAPIDAPI_PROXIED = new Set<string>([
   "/api/retraction-check",
   "/api/oa-check",
   "/api/verify",
+  "/api/audit",
   "/api/export",
 ]);
 

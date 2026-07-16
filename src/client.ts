@@ -3,6 +3,7 @@ import { unproxiedWarning } from "./config.js";
 import { err } from "./output.js";
 import type {
   ApiResult,
+  AuditApiResponse,
   FormatApiResponse,
   HealthApiResponse,
   OaApiResponse,
@@ -151,6 +152,18 @@ export function verifyCitation(
   body: { claimed: Record<string, unknown>; options?: { screen_with_llm?: boolean } },
 ): Promise<ApiResult<VerifyApiResponse>> {
   return callApi<VerifyApiResponse>(config, "/api/verify", { body });
+}
+
+export function auditBibliography(
+  config: ResolvedConfig,
+  body: {
+    bibliography?: string;
+    format?: string;
+    claims?: Array<Record<string, unknown>>;
+    options?: { screen_with_llm?: boolean; checks?: string[] };
+  },
+): Promise<ApiResult<AuditApiResponse>> {
+  return callApi<AuditApiResponse>(config, "/api/audit", { body });
 }
 
 export function listStyles(

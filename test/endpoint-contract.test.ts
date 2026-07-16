@@ -23,6 +23,7 @@ import { describe, expect, it } from "vitest";
 
 // The `/api/*` paths src/client.ts pins. Keep sorted.
 const PINNED_ENDPOINTS = [
+  "/api/audit",
   "/api/csl/styles",
   "/api/export",
   "/api/format",

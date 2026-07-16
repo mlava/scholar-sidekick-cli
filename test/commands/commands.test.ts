@@ -221,6 +221,109 @@ describe("verify", () => {
   });
 });
 
+describe("audit", () => {
+  const fixture = join(tmpdir(), `ss-cli-audit-${process.pid}.bib`);
+  afterEach(() => rm(fixture, { force: true }));
+
+  const AUDIT_OK = {
+    ok: true,
+    format: "bibtex",
+    // Entry indices are 1-based in the API contract.
+    entries: [
+      { index: 1, sourceKey: "ligo", status: "ok", verdict: "matched", confidence: "high", matched: ITEM, mismatches: [], retraction: { checked: true, doi: "10.1/x", isRetracted: false, hasCorrections: false, hasConcern: false, notices: [] } },
+      { index: 2, sourceKey: "wakefield", status: "ok", verdict: "matched", confidence: "high", matched: ITEM, mismatches: [], retraction: { checked: true, doi: "10.1/y", isRetracted: true, hasCorrections: false, hasConcern: false, notices: [] } },
+      { index: 3, sourceKey: "fab", status: "ok", verdict: "mismatch", confidence: "high", matched: ITEM, mismatches: [{ field: "title", claimed: "Invented", resolved: "Fabricated citations", similarity: 0.1 }], retraction: { checked: true, doi: "10.1/z", isRetracted: false, hasCorrections: false, hasConcern: false, notices: [] } },
+    ],
+    parseErrors: [],
+    truncated: 0,
+    summary: { total: 3, matched: 2, mismatch: 1, ambiguous: 0, not_found: 0, errored: 0, retracted: 1 },
+  };
+
+  it("reads a bibliography file, posts it, and renders verdicts + summary", async () => {
+    await writeFile(fixture, "@article{ligo, title={X}, doi={10.1/x}}");
+    const fetchMock = mockFetch(fakeResponse({ json: AUDIT_OK }));
+    const { stdout } = await runCli(["audit", fixture]);
+    expect(stdout).toContain("1. ligo");
+    expect(stdout).toContain("MATCHED");
+    expect(stdout).toContain("MISMATCH");
+    expect(stdout).toContain("RETRACTED");
+    expect(stdout).toContain("3 entries:");
+    expect(stdout).toContain("retracted 1");
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain("/api/audit");
+    const body = JSON.parse(init.body as string);
+    expect(body.bibliography).toContain("@article{ligo");
+    expect(body.options).toBeUndefined();
+  });
+
+  it("sends checks:[] with --no-retraction and format override", async () => {
+    await writeFile(fixture, "@article{a, title={X}}");
+    const fetchMock = mockFetch(fakeResponse({ json: AUDIT_OK }));
+    await runCli(["audit", fixture, "--no-retraction", "--format", "bibtex"]);
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    expect(body.options).toEqual({ checks: [] });
+    expect(body.format).toBe("bibtex");
+  });
+
+  it("sends the LLM-screen option when requested", async () => {
+    await writeFile(fixture, "@article{a, title={X}}");
+    const fetchMock = mockFetch(fakeResponse({ json: AUDIT_OK }));
+    await runCli(["audit", fixture, "--screen-with-llm"]);
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    expect(body.options).toEqual({ screen_with_llm: true });
+  });
+
+  it("emits raw JSON with --json", async () => {
+    await writeFile(fixture, "@article{a, title={X}}");
+    mockFetch(fakeResponse({ json: AUDIT_OK }));
+    const { stdout } = await runCli(["audit", fixture, "--json"]);
+    expect(JSON.parse(stdout).summary.total).toBe(3);
+  });
+
+  it("renders per-entry errors, parse errors, and the truncation note", async () => {
+    await writeFile(fixture, "@article{a, title={X}}");
+    mockFetch(
+      fakeResponse({
+        json: {
+          ok: true,
+          format: "bibtex",
+          entries: [{ index: 1, sourceKey: "bad", status: "error", error: "resolver timeout" }],
+          parseErrors: [{ index: 2, error: "parse_error", message: "unbalanced braces" }],
+          truncated: 2,
+          summary: { total: 1, matched: 0, mismatch: 0, ambiguous: 0, not_found: 0, errored: 1, retracted: 0 },
+        },
+      }),
+    );
+    const { stdout } = await runCli(["audit", fixture]);
+    expect(stdout).toContain("ERROR");
+    expect(stdout).toContain("resolver timeout");
+    expect(stdout).toContain("parse error at entry 2: unbalanced braces");
+    expect(stdout).toContain("2 entries beyond the 25-entry cap");
+  });
+
+  it("rejects an unknown --format with a usage error", async () => {
+    await expectExit(["audit", fixture, "--format", "endnote"], EXIT.USAGE);
+  });
+
+  it("rejects empty input with a usage error", async () => {
+    await writeFile(fixture, "   \n");
+    await expectExit(["audit", fixture], EXIT.USAGE);
+  });
+
+  it("exits 1 with --fail-on-issues when the corpus has problems", async () => {
+    await writeFile(fixture, "@article{a, title={X}}");
+    mockFetch(fakeResponse({ json: AUDIT_OK }));
+    await expectExit(["audit", fixture, "--fail-on-issues"], EXIT.API_ERROR);
+  });
+
+  it("exits 1 on an API error envelope", async () => {
+    await writeFile(fixture, "@article{a, title={X}}");
+    mockFetch(fakeResponse({ status: 502, json: { ok: false, error: "upstream outage", code: "UPSTREAM_ERROR" } }));
+    const e = await expectExit(["audit", fixture], EXIT.API_ERROR);
+    expect(e.message).toContain("UPSTREAM_ERROR");
+  });
+});
+
 describe("retraction", () => {
   it("reports a clean record", async () => {
     mockFetch(

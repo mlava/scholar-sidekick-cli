@@ -102,6 +102,58 @@ export interface VerifyApiResponse {
   requestId?: string;
 }
 
+export interface AuditRetraction {
+  /** false when not requested, no resolvable DOI, or an upstream error swallowed the check. */
+  checked: boolean;
+  doi: string | null;
+  isRetracted: boolean;
+  hasCorrections: boolean;
+  hasConcern: boolean;
+  notices: RetractionNotice[];
+}
+
+export interface AuditEntry {
+  index: number;
+  sourceKey?: string;
+  status: "ok" | "error";
+  /** Set when status is "error" (the entry failed without failing the batch). */
+  error?: string;
+  verdict?: "matched" | "mismatch" | "not_found" | "ambiguous";
+  confidence?: "high" | "medium" | "low";
+  matched?: BiblioItem | null;
+  mismatches?: VerifyMismatch[];
+  retraction?: AuditRetraction | null;
+  _provenance?: Record<string, unknown>;
+}
+
+export interface AuditSummary {
+  total: number;
+  matched: number;
+  mismatch: number;
+  ambiguous: number;
+  not_found: number;
+  errored: number;
+  retracted: number;
+}
+
+export interface AuditParseError {
+  index: number;
+  error: string;
+  message: string;
+}
+
+export interface AuditApiResponse {
+  ok: boolean;
+  format?: "bibtex" | "ris" | "csl-json" | null;
+  entries?: AuditEntry[];
+  parseErrors?: AuditParseError[];
+  truncated?: number;
+  summary?: AuditSummary;
+  error?: string;
+  code?: string;
+  requestId?: string;
+}
+
 export interface StyleSummary {
   id: string;
   title?: string;

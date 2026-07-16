@@ -74,6 +74,59 @@ describe("verify alternate verdicts", () => {
   });
 });
 
+describe("audit edge branches", () => {
+  it("reads the bibliography from stdin when no file is given", async () => {
+    const restore = stubStdin("@article{a, title={T}, doi={10.1/x}}");
+    try {
+      const fetchMock = mockFetch(
+        fakeResponse({
+          json: {
+            ok: true,
+            format: "bibtex",
+            entries: [{ index: 1, status: "ok", verdict: "ambiguous", matched: null, mismatches: [], retraction: null }],
+            parseErrors: [],
+            truncated: 0,
+            summary: { total: 1, matched: 0, mismatch: 0, ambiguous: 1, not_found: 0, errored: 0, retracted: 0 },
+          },
+        }),
+      );
+      const { stdout } = await runCli(["audit"]);
+      expect(stdout).toContain("AMBIGUOUS");
+      const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+      expect(body.bibliography).toContain("@article{a");
+    } finally {
+      restore();
+    }
+  });
+
+  it("flags concern and correction entries", async () => {
+    const restore = stubStdin("@article{a, title={T}}");
+    try {
+      const base = { checked: true, doi: "10.1/x", isRetracted: false, notices: [] };
+      mockFetch(
+        fakeResponse({
+          json: {
+            ok: true,
+            format: "bibtex",
+            entries: [
+              { index: 1, status: "ok", verdict: "matched", matched: { title: "A" }, mismatches: [], retraction: { ...base, hasCorrections: false, hasConcern: true } },
+              { index: 2, status: "ok", verdict: "matched", matched: { title: "B" }, mismatches: [], retraction: { ...base, hasCorrections: true, hasConcern: false } },
+            ],
+            parseErrors: [],
+            truncated: 0,
+            summary: { total: 2, matched: 2, mismatch: 0, ambiguous: 0, not_found: 0, errored: 0, retracted: 0 },
+          },
+        }),
+      );
+      const { stdout } = await runCli(["audit"]);
+      expect(stdout).toContain("expression of concern");
+      expect(stdout).toContain("correction issued");
+    } finally {
+      restore();
+    }
+  });
+});
+
 describe("retraction / oa branches", () => {
   it("flags an expression of concern", async () => {
     mockFetch(

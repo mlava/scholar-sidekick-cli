@@ -1,5 +1,6 @@
 import { Command } from "commander";
 
+import { registerAudit } from "./commands/audit.js";
 import { registerExport } from "./commands/export.js";
 import { registerFormat } from "./commands/format.js";
 import { registerFormatItems } from "./commands/format-items.js";
@@ -19,7 +20,7 @@ export function buildProgram(): Command {
   program
     .name("scholar")
     .description(
-      "Scholar Sidekick CLI — resolve, format, export, and verify scholarly citations.\n\n" +
+      "Scholar Sidekick CLI — resolve, format, export, verify, and audit scholarly citations.\n\n" +
         "Calls the public Scholar Sidekick API (https://scholar-sidekick.com). No key is\n" +
         "required for the free rate-limited tier; pass --rapidapi-key or --api-key to\n" +
         "raise limits and unlock paid features.",
@@ -40,6 +41,7 @@ export function buildProgram(): Command {
   registerFormatItems(program);
   registerStream(program);
   registerVerify(program);
+  registerAudit(program);
   registerRetraction(program);
   registerOa(program);
   registerStyles(program);
