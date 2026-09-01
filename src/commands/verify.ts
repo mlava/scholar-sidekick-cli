@@ -70,7 +70,7 @@ export function registerVerify(program: Command): void {
     .command("verify")
     .description("Verify a claimed citation against the record at its identifier (fabrication detection)")
     .requiredOption("--title <title>", "the cited title (required)")
-    .option("--doi <doi>", "cited DOI")
+    .option("--doi <doi>", "cited DOI (shortDOI aliases accepted)")
     .option("--pmid <pmid>", "cited PMID")
     .option("--pmcid <pmcid>", "cited PMCID")
     .option("--isbn <isbn>", "cited ISBN")

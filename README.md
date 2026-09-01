@@ -1,6 +1,6 @@
 # Scholar Sidekick CLI
 
-Command-line client for [Scholar Sidekick](https://scholar-sidekick.com) — resolve any scholarly identifier (DOI, PMID, PMCID, ISBN, arXiv, ISSN, NASA ADS bibcode, WHO IRIS URL) into 10,000+ citation styles or nine export formats, and run retraction, open-access, and citation-fabrication checks, straight from your terminal.
+Command-line client for [Scholar Sidekick](https://scholar-sidekick.com) — resolve any scholarly identifier (DOI, PMID, PMCID, ISBN, arXiv, ISSN, NASA ADS bibcode, WHO IRIS URL; shortDOI aliases like `10/aabbe` accepted) into 10,000+ citation styles or nine export formats, and run retraction, open-access, and citation-fabrication checks, straight from your terminal.
 
 It is a thin wrapper over the public [Scholar Sidekick REST API](https://scholar-sidekick.com/docs). **No API key is required** for the free, rate-limited tier — install and go. Add a key to raise limits and unlock paid features.
 
@@ -50,6 +50,8 @@ scholar health
 ```
 
 Every command accepts **multiple identifiers** (space-, comma-, or newline-separated) for batch processing, except `verify`, `retraction`, and `oa`, which take a single identifier, and `audit`, which takes a bibliography file (or stdin) rather than identifiers.
+
+A shortDOI alias (`10/aabbe`, from shortdoi.org) is accepted anywhere a DOI is, and expanded to the full DOI before resolving — so the citation and every export carry the real DOI.
 
 ## Commands
 

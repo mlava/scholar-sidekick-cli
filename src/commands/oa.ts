@@ -33,7 +33,7 @@ export function registerOa(program: Command): void {
   program
     .command("oa")
     .alias("open-access")
-    .argument("<id>", "a single identifier (DOI, PMID, PMCID, arXiv, ISBN, or ADS bibcode)")
+    .argument("<id>", "a single identifier (DOI, PMID, PMCID, arXiv, ISBN, or ADS bibcode; shortDOI aliases accepted)")
     .description("Check whether a work is openly accessible and where to find the best legal copy (Unpaywall)")
     .action(async (id: string, _opts, cmd: Command) => {
       const { config, styler } = buildContext(cmd);

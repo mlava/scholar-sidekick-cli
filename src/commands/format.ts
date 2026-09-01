@@ -7,7 +7,7 @@ import { buildContext, joinIds, renderItems, unwrap } from "./shared.js";
 export function registerFormat(program: Command): void {
   program
     .command("format")
-    .argument("<ids...>", "one or more identifiers (DOI, PMID, PMCID, ISBN, arXiv, ISSN, ADS, WHO IRIS)")
+    .argument("<ids...>", "one or more identifiers (DOI, PMID, PMCID, ISBN, arXiv, ISSN, ADS, WHO IRIS; shortDOI aliases accepted)")
     .description("Format identifiers into a citation style (Vancouver, APA, AMA, IEEE, CSE, or any CSL style)")
     .option("-s, --style <style>", "citation style id (default: vancouver)")
     .option("--lang <bcp47>", "BCP-47 locale tag (e.g. en-GB)")

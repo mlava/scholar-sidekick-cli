@@ -32,7 +32,7 @@ function render(data: RetractionApiResponse, styler: Styler): void {
 export function registerRetraction(program: Command): void {
   program
     .command("retraction")
-    .argument("<id>", "a single identifier (DOI, PMID, PMCID, arXiv, or ADS bibcode)")
+    .argument("<id>", "a single identifier (DOI, PMID, PMCID, arXiv, or ADS bibcode; shortDOI aliases accepted)")
     .description("Check whether a work has been retracted, corrected, or flagged (Crossref / Retraction Watch)")
     .action(async (id: string, _opts, cmd: Command) => {
       const { config, styler } = buildContext(cmd);
