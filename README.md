@@ -62,8 +62,8 @@ A shortDOI alias (`10/aabbe`, from shortdoi.org) is accepted anywhere a DOI is, 
 | `export <ids...>` | Export to a file format: `--format bib\|ris\|csv\|csl\|endnote-xml\|endnote-refer\|refworks\|medline\|zotero-rdf\|txt`. |
 | `format-items` | Format pre-resolved items from `--file <json>` or stdin (a JSON array). |
 | `stream <ids...>` | Format a batch, streaming each result as it resolves (NDJSON). |
-| `verify` | Verify a claimed citation against the record at its identifier. `--title` (required) + an identifier flag. |
-| `audit [file]` | Audit a whole bibliography (BibTeX/RIS/CSL-JSON, max 25 entries; stdin if no file): per-entry fabrication check + retraction status, plus a corpus summary. `--format`, `--no-retraction`, `--fail-on-issues`. |
+| `verify` | Verify a claimed citation against the record at its identifier. `--title` (required) + an identifier flag. `--semantic-title` also judges whether the cited and resolved titles describe the same work (catches one-word title swaps; flagged → `ambiguous`, never `mismatch`). |
+| `audit [file]` | Audit a whole bibliography (BibTeX/RIS/CSL-JSON, max 25 entries; stdin if no file): per-entry fabrication check + retraction status, plus a corpus summary. `--format`, `--no-retraction`, `--semantic-title`, `--fail-on-issues`. |
 | `retraction <id>` | Check retraction / correction / expression-of-concern status (Crossref / Retraction Watch). |
 | `oa <id>` | Check open-access status and best legal copy (Unpaywall). Alias: `open-access`. |
 | `styles [query]` | List available CSL citation styles (searchable, paginated). |

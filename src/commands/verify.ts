@@ -1,11 +1,27 @@
 import type { Command } from "commander";
 
 import { verifyCitation } from "../client.js";
-import { CliError, EXIT, out, printJson, printProvenance, type Styler } from "../output.js";
+import {
+  CliError,
+  EXIT,
+  out,
+  printJson,
+  printProvenance,
+  type Styler,
+} from "../output.js";
 import type { VerifyApiResponse } from "../types.js";
 import { buildContext, unwrap } from "./shared.js";
 
-const ID_FLAGS = ["doi", "pmid", "pmcid", "isbn", "arxiv", "issn", "ads", "whoIris"] as const;
+const ID_FLAGS = [
+  "doi",
+  "pmid",
+  "pmcid",
+  "isbn",
+  "arxiv",
+  "issn",
+  "ads",
+  "whoIris",
+] as const;
 
 function buildClaimed(opts: Record<string, unknown>): Record<string, unknown> {
   const claimed: Record<string, unknown> = { title: opts.title };
@@ -31,7 +47,8 @@ const VERDICT_LABEL: Record<string, string> = {
 };
 
 function colorVerdict(verdict: string | undefined, styler: Styler): string {
-  const label = VERDICT_LABEL[verdict ?? ""] ?? (verdict ?? "unknown").toUpperCase();
+  const label =
+    VERDICT_LABEL[verdict ?? ""] ?? (verdict ?? "unknown").toUpperCase();
   switch (verdict) {
     case "matched":
       return styler.green(label);
@@ -45,7 +62,9 @@ function colorVerdict(verdict: string | undefined, styler: Styler): string {
 }
 
 function renderVerify(data: VerifyApiResponse, styler: Styler): void {
-  const conf = data.confidence ? styler.dim(` (${data.confidence} confidence)`) : "";
+  const conf = data.confidence
+    ? styler.dim(` (${data.confidence} confidence)`)
+    : "";
   out(`${colorVerdict(data.verdict, styler)}${conf}`);
 
   const resolvedTitle = (data.matched?.title as string | undefined) ?? null;
@@ -68,7 +87,9 @@ function renderVerify(data: VerifyApiResponse, styler: Styler): void {
 export function registerVerify(program: Command): void {
   program
     .command("verify")
-    .description("Verify a claimed citation against the record at its identifier (fabrication detection)")
+    .description(
+      "Verify a claimed citation against the record at its identifier (fabrication detection)",
+    )
     .requiredOption("--title <title>", "the cited title (required)")
     .option("--doi <doi>", "cited DOI (shortDOI aliases accepted)")
     .option("--pmid <pmid>", "cited PMID")
@@ -81,22 +102,39 @@ export function registerVerify(program: Command): void {
     .option("--author <family>", "cited first-author family name")
     .option("--year <year>", "cited publication year")
     .option("--container <name>", "cited journal / container title")
-    .option("--screen-with-llm", "opt into the Stage 3 LLM screen (paid / first-party only)")
-    .option("--fail-on-mismatch", "exit non-zero when the verdict is mismatch or not_found")
+    .option(
+      "--semantic-title",
+      "also judge whether the cited and resolved titles describe the same work (catches one-word title swaps; flagged → ambiguous, never mismatch)",
+    )
+    .option(
+      "--screen-with-llm",
+      "opt into the Stage 3 LLM screen (paid / first-party only)",
+    )
+    .option(
+      "--fail-on-mismatch",
+      "exit non-zero when the verdict is mismatch or not_found",
+    )
     .action(async (opts, cmd: Command) => {
       const { config, styler } = buildContext(cmd);
 
       if (!ID_FLAGS.some((f) => opts[f])) {
         throw new CliError(
-          styler.red("Error: provide at least one identifier (--doi, --pmid, --pmcid, --isbn, --arxiv, --issn, --ads, or --who-iris)"),
+          styler.red(
+            "Error: provide at least one identifier (--doi, --pmid, --pmcid, --isbn, --arxiv, --issn, --ads, or --who-iris)",
+          ),
           EXIT.USAGE,
         );
       }
 
-      const body: { claimed: Record<string, unknown>; options?: { screen_with_llm?: boolean } } = {
-        claimed: buildClaimed(opts),
-      };
-      if (opts.screenWithLlm) body.options = { screen_with_llm: true };
+      const body: {
+        claimed: Record<string, unknown>;
+        options?: { screen_with_llm?: boolean; semantic_title?: boolean };
+      } = { claimed: buildClaimed(opts) };
+      const options: { screen_with_llm?: boolean; semantic_title?: boolean } =
+        {};
+      if (opts.screenWithLlm) options.screen_with_llm = true;
+      if (opts.semanticTitle) options.semantic_title = true;
+      if (Object.keys(options).length) body.options = options;
 
       const result = await verifyCitation(config, body);
       const data = unwrap(result, styler);
@@ -108,7 +146,10 @@ export function registerVerify(program: Command): void {
       }
       printProvenance(result.headers, styler, config.quiet);
 
-      if (opts.failOnMismatch && (data.verdict === "mismatch" || data.verdict === "not_found")) {
+      if (
+        opts.failOnMismatch &&
+        (data.verdict === "mismatch" || data.verdict === "not_found")
+      ) {
         throw new CliError("", EXIT.API_ERROR);
       }
     });

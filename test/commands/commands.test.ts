@@ -31,11 +31,19 @@ async function expectExit(args: string[], code: number): Promise<CliError> {
 
 describe("format", () => {
   it("prints formatted text and sends the right body", async () => {
-    const fetchMock = mockFetch(fakeResponse({ json: { ok: true, text: "Topaz M. ...", warnings: [] } }));
+    const fetchMock = mockFetch(
+      fakeResponse({ json: { ok: true, text: "Topaz M. ...", warnings: [] } }),
+    );
     const { stdout } = await runCli(["format", "10.1/x", "--style", "apa"]);
     expect(stdout).toContain("Topaz M. ...");
-    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
-    expect(body).toMatchObject({ text: "10.1/x", style: "apa", output: "text" });
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body).toMatchObject({
+      text: "10.1/x",
+      style: "apa",
+      output: "text",
+    });
   });
 
   it("emits raw JSON with --json", async () => {
@@ -53,13 +61,22 @@ describe("format", () => {
   });
 
   it("prints warnings to stderr", async () => {
-    mockFetch(fakeResponse({ json: { ok: true, text: "X", warnings: ["fallback-to-default"] } }));
+    mockFetch(
+      fakeResponse({
+        json: { ok: true, text: "X", warnings: ["fallback-to-default"] },
+      }),
+    );
     const { stderr } = await runCli(["format", "10.1/x"]);
     expect(stderr).toContain("fallback-to-default");
   });
 
   it("exits 1 on an API error envelope", async () => {
-    mockFetch(fakeResponse({ status: 400, json: { ok: false, error: "bad", code: "VALIDATION_ERROR" } }));
+    mockFetch(
+      fakeResponse({
+        status: 400,
+        json: { ok: false, error: "bad", code: "VALIDATION_ERROR" },
+      }),
+    );
     const e = await expectExit(["format", "10.1/x"], EXIT.API_ERROR);
     expect(e.message).toContain("VALIDATION_ERROR");
   });
@@ -67,11 +84,15 @@ describe("format", () => {
 
 describe("resolve", () => {
   it("renders item metadata and requests output=json", async () => {
-    const fetchMock = mockFetch(fakeResponse({ json: { ok: true, items: [ITEM] } }));
+    const fetchMock = mockFetch(
+      fakeResponse({ json: { ok: true, items: [ITEM] } }),
+    );
     const { stdout } = await runCli(["resolve", "10.1/x"]);
     expect(stdout).toContain("Fabricated citations");
     expect(stdout).toContain("Maxim Topaz");
-    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
     expect(body.output).toBe("json");
   });
 
@@ -84,14 +105,22 @@ describe("resolve", () => {
 
 describe("export", () => {
   it("writes raw content to stdout", async () => {
-    mockFetch(fakeResponse({ text: "TY  - JOUR\nER  -", contentType: "text/plain" }));
+    mockFetch(
+      fakeResponse({ text: "TY  - JOUR\nER  -", contentType: "text/plain" }),
+    );
     const { stdout } = await runCli(["export", "10.1/x", "--format", "ris"]);
     expect(stdout).toBe("TY  - JOUR\nER  -\n");
   });
 
   it("wraps content with --json", async () => {
     mockFetch(fakeResponse({ text: "BIB", contentType: "text/plain" }));
-    const { stdout } = await runCli(["export", "10.1/x", "--format", "bib", "--json"]);
+    const { stdout } = await runCli([
+      "export",
+      "10.1/x",
+      "--format",
+      "bib",
+      "--json",
+    ]);
     expect(JSON.parse(stdout)).toEqual({ format: "bib", content: "BIB" });
   });
 });
@@ -102,10 +131,14 @@ describe("format-items", () => {
 
   it("reads a JSON file and formats it", async () => {
     await writeFile(fixture, JSON.stringify([ITEM]));
-    const fetchMock = mockFetch(fakeResponse({ json: { ok: true, text: "rendered" } }));
+    const fetchMock = mockFetch(
+      fakeResponse({ json: { ok: true, text: "rendered" } }),
+    );
     const { stdout } = await runCli(["format-items", "--file", fixture]);
     expect(stdout).toContain("rendered");
-    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
     expect(Array.isArray(body.items)).toBe(true);
   });
 
@@ -127,7 +160,11 @@ describe("stream", () => {
         JSON.stringify({ type: "start", idx: -1 }),
         JSON.stringify({ type: "item", idx: 0, render: "Citation one." }),
         JSON.stringify({ type: "item", idx: 1, render: "Citation two." }),
-        JSON.stringify({ type: "done", idx: -1, output: "ignored-because-live" }),
+        JSON.stringify({
+          type: "done",
+          idx: -1,
+          output: "ignored-because-live",
+        }),
       ]),
     );
     const { stdout } = await runCli(["stream", "10.1/x"]);
@@ -148,16 +185,25 @@ describe("stream", () => {
   });
 
   it("re-emits raw NDJSON lines with --json", async () => {
-    mockFetch(ndjsonResponse([JSON.stringify({ type: "item", idx: 0, render: "x" })]));
+    mockFetch(
+      ndjsonResponse([JSON.stringify({ type: "item", idx: 0, render: "x" })]),
+    );
     const { stdout } = await runCli(["stream", "10.1/x", "--json"]);
-    expect(stdout.trim()).toBe(JSON.stringify({ type: "item", idx: 0, render: "x" }));
+    expect(stdout.trim()).toBe(
+      JSON.stringify({ type: "item", idx: 0, render: "x" }),
+    );
   });
 
   it("surfaces per-line errors and warnings on stderr", async () => {
     mockFetch(
       ndjsonResponse([
         JSON.stringify({ type: "warning", idx: -1, message: "style fallback" }),
-        JSON.stringify({ type: "error", idx: 0, message: "unresolvable", code: "UPSTREAM_TIMEOUT" }),
+        JSON.stringify({
+          type: "error",
+          idx: 0,
+          message: "unresolvable",
+          code: "UPSTREAM_TIMEOUT",
+        }),
         JSON.stringify({ type: "done", idx: -1, output: "" }),
       ]),
     );
@@ -167,7 +213,12 @@ describe("stream", () => {
   });
 
   it("exits 1 when the stream endpoint returns an HTTP error", async () => {
-    mockFetch(fakeResponse({ status: 503, json: { ok: false, error: "Streaming disabled" } }));
+    mockFetch(
+      fakeResponse({
+        status: 503,
+        json: { ok: false, error: "Streaming disabled" },
+      }),
+    );
     await expectExit(["stream", "10.1/x"], EXIT.API_ERROR);
   });
 });
@@ -179,7 +230,14 @@ describe("verify", () => {
 
   it("renders a matched verdict and bundles claimed fields", async () => {
     const fetchMock = mockFetch(
-      fakeResponse({ json: { ok: true, verdict: "matched", confidence: "high", matched: ITEM } }),
+      fakeResponse({
+        json: {
+          ok: true,
+          verdict: "matched",
+          confidence: "high",
+          matched: ITEM,
+        },
+      }),
     );
     const { stdout } = await runCli([
       "verify",
@@ -193,16 +251,51 @@ describe("verify", () => {
       "2026",
     ]);
     expect(stdout).toContain("MATCHED");
-    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
-    expect(body.claimed).toMatchObject({ title: "Fabricated citations", doi: "10.1/x", year: 2026 });
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.claimed).toMatchObject({
+      title: "Fabricated citations",
+      doi: "10.1/x",
+      year: 2026,
+    });
     expect(body.claimed.authors).toEqual([{ family: "Topaz" }]);
   });
 
   it("sends the LLM-screen option when requested", async () => {
-    const fetchMock = mockFetch(fakeResponse({ json: { ok: true, verdict: "matched" } }));
-    await runCli(["verify", "--title", "X", "--doi", "10.1/x", "--screen-with-llm"]);
-    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    const fetchMock = mockFetch(
+      fakeResponse({ json: { ok: true, verdict: "matched" } }),
+    );
+    await runCli([
+      "verify",
+      "--title",
+      "X",
+      "--doi",
+      "10.1/x",
+      "--screen-with-llm",
+    ]);
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
     expect(body.options).toEqual({ screen_with_llm: true });
+  });
+
+  it("sends options.semantic_title with --semantic-title", async () => {
+    const fetchMock = mockFetch(
+      fakeResponse({ json: { ok: true, verdict: "matched" } }),
+    );
+    await runCli([
+      "verify",
+      "--title",
+      "X",
+      "--doi",
+      "10.1/x",
+      "--semantic-title",
+    ]);
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.options).toEqual({ semantic_title: true });
   });
 
   it("renders mismatches and exits 1 with --fail-on-mismatch", async () => {
@@ -213,11 +306,21 @@ describe("verify", () => {
           verdict: "mismatch",
           confidence: "high",
           matched: ITEM,
-          mismatches: [{ field: "title", claimed: "Wrong", resolved: "Fabricated citations", similarity: 0.4 }],
+          mismatches: [
+            {
+              field: "title",
+              claimed: "Wrong",
+              resolved: "Fabricated citations",
+              similarity: 0.4,
+            },
+          ],
         },
       }),
     );
-    await expectExit(["verify", "--title", "Wrong", "--doi", "10.1/x", "--fail-on-mismatch"], EXIT.API_ERROR);
+    await expectExit(
+      ["verify", "--title", "Wrong", "--doi", "10.1/x", "--fail-on-mismatch"],
+      EXIT.API_ERROR,
+    );
   });
 });
 
@@ -230,13 +333,76 @@ describe("audit", () => {
     format: "bibtex",
     // Entry indices are 1-based in the API contract.
     entries: [
-      { index: 1, sourceKey: "ligo", status: "ok", verdict: "matched", confidence: "high", matched: ITEM, mismatches: [], retraction: { checked: true, doi: "10.1/x", isRetracted: false, hasCorrections: false, hasConcern: false, notices: [] } },
-      { index: 2, sourceKey: "wakefield", status: "ok", verdict: "matched", confidence: "high", matched: ITEM, mismatches: [], retraction: { checked: true, doi: "10.1/y", isRetracted: true, hasCorrections: false, hasConcern: false, notices: [] } },
-      { index: 3, sourceKey: "fab", status: "ok", verdict: "mismatch", confidence: "high", matched: ITEM, mismatches: [{ field: "title", claimed: "Invented", resolved: "Fabricated citations", similarity: 0.1 }], retraction: { checked: true, doi: "10.1/z", isRetracted: false, hasCorrections: false, hasConcern: false, notices: [] } },
+      {
+        index: 1,
+        sourceKey: "ligo",
+        status: "ok",
+        verdict: "matched",
+        confidence: "high",
+        matched: ITEM,
+        mismatches: [],
+        retraction: {
+          checked: true,
+          doi: "10.1/x",
+          isRetracted: false,
+          hasCorrections: false,
+          hasConcern: false,
+          notices: [],
+        },
+      },
+      {
+        index: 2,
+        sourceKey: "wakefield",
+        status: "ok",
+        verdict: "matched",
+        confidence: "high",
+        matched: ITEM,
+        mismatches: [],
+        retraction: {
+          checked: true,
+          doi: "10.1/y",
+          isRetracted: true,
+          hasCorrections: false,
+          hasConcern: false,
+          notices: [],
+        },
+      },
+      {
+        index: 3,
+        sourceKey: "fab",
+        status: "ok",
+        verdict: "mismatch",
+        confidence: "high",
+        matched: ITEM,
+        mismatches: [
+          {
+            field: "title",
+            claimed: "Invented",
+            resolved: "Fabricated citations",
+            similarity: 0.1,
+          },
+        ],
+        retraction: {
+          checked: true,
+          doi: "10.1/z",
+          isRetracted: false,
+          hasCorrections: false,
+          hasConcern: false,
+          notices: [],
+        },
+      },
     ],
     parseErrors: [],
     truncated: 0,
-    summary: { total: 3, matched: 2, mismatch: 1, ambiguous: 0, not_found: 0, errored: 0, retracted: 1 },
+    summary: {
+      total: 3,
+      matched: 2,
+      mismatch: 1,
+      ambiguous: 0,
+      not_found: 0,
+      errored: 0,
+      retracted: 1,
+    },
   };
 
   it("reads a bibliography file, posts it, and renders verdicts + summary", async () => {
@@ -260,7 +426,9 @@ describe("audit", () => {
     await writeFile(fixture, "@article{a, title={X}}");
     const fetchMock = mockFetch(fakeResponse({ json: AUDIT_OK }));
     await runCli(["audit", fixture, "--no-retraction", "--format", "bibtex"]);
-    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
     expect(body.options).toEqual({ checks: [] });
     expect(body.format).toBe("bibtex");
   });
@@ -269,8 +437,20 @@ describe("audit", () => {
     await writeFile(fixture, "@article{a, title={X}}");
     const fetchMock = mockFetch(fakeResponse({ json: AUDIT_OK }));
     await runCli(["audit", fixture, "--screen-with-llm"]);
-    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
     expect(body.options).toEqual({ screen_with_llm: true });
+  });
+
+  it("sends options.semantic_title with --semantic-title (audit)", async () => {
+    await writeFile(fixture, "@article{a, title={X}}");
+    const fetchMock = mockFetch(fakeResponse({ json: AUDIT_OK }));
+    await runCli(["audit", fixture, "--semantic-title", "--no-retraction"]);
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.options).toEqual({ checks: [], semantic_title: true });
   });
 
   it("emits raw JSON with --json", async () => {
@@ -287,10 +467,27 @@ describe("audit", () => {
         json: {
           ok: true,
           format: "bibtex",
-          entries: [{ index: 1, sourceKey: "bad", status: "error", error: "resolver timeout" }],
-          parseErrors: [{ index: 2, error: "parse_error", message: "unbalanced braces" }],
+          entries: [
+            {
+              index: 1,
+              sourceKey: "bad",
+              status: "error",
+              error: "resolver timeout",
+            },
+          ],
+          parseErrors: [
+            { index: 2, error: "parse_error", message: "unbalanced braces" },
+          ],
           truncated: 2,
-          summary: { total: 1, matched: 0, mismatch: 0, ambiguous: 0, not_found: 0, errored: 1, retracted: 0 },
+          summary: {
+            total: 1,
+            matched: 0,
+            mismatch: 0,
+            ambiguous: 0,
+            not_found: 0,
+            errored: 1,
+            retracted: 0,
+          },
         },
       }),
     );
@@ -318,7 +515,12 @@ describe("audit", () => {
 
   it("exits 1 on an API error envelope", async () => {
     await writeFile(fixture, "@article{a, title={X}}");
-    mockFetch(fakeResponse({ status: 502, json: { ok: false, error: "upstream outage", code: "UPSTREAM_ERROR" } }));
+    mockFetch(
+      fakeResponse({
+        status: 502,
+        json: { ok: false, error: "upstream outage", code: "UPSTREAM_ERROR" },
+      }),
+    );
     const e = await expectExit(["audit", fixture], EXIT.API_ERROR);
     expect(e.message).toContain("UPSTREAM_ERROR");
   });
@@ -328,7 +530,17 @@ describe("retraction", () => {
   it("reports a clean record", async () => {
     mockFetch(
       fakeResponse({
-        json: { ok: true, doi: "10.1/x", result: { isRetracted: false, hasConcern: false, hasCorrections: false, notices: [], title: "T" } },
+        json: {
+          ok: true,
+          doi: "10.1/x",
+          result: {
+            isRetracted: false,
+            hasConcern: false,
+            hasCorrections: false,
+            notices: [],
+            title: "T",
+          },
+        },
       }),
     );
     const { stdout } = await runCli(["retraction", "10.1/x"]);
@@ -346,7 +558,14 @@ describe("retraction", () => {
             hasConcern: false,
             hasCorrections: false,
             title: "Bad paper",
-            notices: [{ type: "retraction", label: "Retraction", date: "2024-01-01", source: "RW" }],
+            notices: [
+              {
+                type: "retraction",
+                label: "Retraction",
+                date: "2024-01-01",
+                source: "RW",
+              },
+            ],
           },
         },
       }),
@@ -357,7 +576,11 @@ describe("retraction", () => {
   });
 
   it("notes when no DOI resolves", async () => {
-    mockFetch(fakeResponse({ json: { ok: true, doi: null, reason: "no_doi", result: null } }));
+    mockFetch(
+      fakeResponse({
+        json: { ok: true, doi: null, reason: "no_doi", result: null },
+      }),
+    );
     const { stdout } = await runCli(["retraction", "9780000000000"]);
     expect(stdout).toContain("no_doi");
   });
@@ -374,7 +597,11 @@ describe("oa", () => {
             isOa: true,
             oaStatus: "gold",
             title: "Open paper",
-            bestLocation: { url: "https://example.com/pdf", version: "publishedVersion", license: "cc-by" },
+            bestLocation: {
+              url: "https://example.com/pdf",
+              version: "publishedVersion",
+              license: "cc-by",
+            },
             locations: [],
           },
         },
@@ -386,7 +613,21 @@ describe("oa", () => {
   });
 
   it("is reachable via the open-access alias", async () => {
-    mockFetch(fakeResponse({ json: { ok: true, doi: "10.1/x", result: { isOa: false, oaStatus: "closed", title: null, bestLocation: null, locations: [] } } }));
+    mockFetch(
+      fakeResponse({
+        json: {
+          ok: true,
+          doi: "10.1/x",
+          result: {
+            isOa: false,
+            oaStatus: "closed",
+            title: null,
+            bestLocation: null,
+            locations: [],
+          },
+        },
+      }),
+    );
     const { stdout } = await runCli(["open-access", "10.1/x"]);
     expect(stdout).toContain("Closed");
   });
@@ -401,7 +642,11 @@ describe("styles", () => {
           total: 2,
           offset: 0,
           styles: [
-            { id: "apa", title: "American Psychological Association", bundled: true },
+            {
+              id: "apa",
+              title: "American Psychological Association",
+              bundled: true,
+            },
             { id: "harvard-x", title: "Harvard", bundled: false },
           ],
         },
@@ -413,7 +658,9 @@ describe("styles", () => {
   });
 
   it("lists categories with --categories", async () => {
-    mockFetch(fakeResponse({ json: { ok: true, categories: ["medicine", "science"] } }));
+    mockFetch(
+      fakeResponse({ json: { ok: true, categories: ["medicine", "science"] } }),
+    );
     const { stdout } = await runCli(["styles", "--categories"]);
     expect(stdout).toContain("medicine");
   });

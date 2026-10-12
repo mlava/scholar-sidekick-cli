@@ -20,7 +20,11 @@ interface CallOpts {
   expectRawText?: boolean;
 }
 
-function buildUrl(baseUrl: string, path: string, query?: CallOpts["query"]): string {
+function buildUrl(
+  baseUrl: string,
+  path: string,
+  query?: CallOpts["query"],
+): string {
   const url = new URL(`${baseUrl}${path}`);
   if (query) {
     for (const [k, v] of Object.entries(query)) {
@@ -73,21 +77,40 @@ export async function callApi<T>(
       let errorMsg = `HTTP ${res.status}`;
       let code: string | undefined;
       try {
-        const errBody = (await res.json()) as { error?: string; message?: string; code?: string };
+        const errBody = (await res.json()) as {
+          error?: string;
+          message?: string;
+          code?: string;
+        };
         errorMsg = errBody.error ?? errBody.message ?? errorMsg;
         code = errBody.code;
       } catch {
         /* fall back to status line */
       }
-      return { ok: false, status: res.status, error: errorMsg, code, requestId: responseRid, headers: scholarHeaders };
+      return {
+        ok: false,
+        status: res.status,
+        error: errorMsg,
+        code,
+        requestId: responseRid,
+        headers: scholarHeaders,
+      };
     }
 
     const ct = res.headers.get("content-type") ?? "";
     const data = (
-      opts.expectRawText || !ct.includes("application/json") ? await res.text() : await res.json()
+      opts.expectRawText || !ct.includes("application/json")
+        ? await res.text()
+        : await res.json()
     ) as T;
 
-    return { ok: true, status: res.status, data, requestId: responseRid, headers: scholarHeaders };
+    return {
+      ok: true,
+      status: res.status,
+      data,
+      requestId: responseRid,
+      headers: scholarHeaders,
+    };
   } catch (e: unknown) {
     if (e instanceof Error && e.name === "AbortError") {
       return {
@@ -114,14 +137,26 @@ export async function callApi<T>(
 
 export function formatCitation(
   config: ResolvedConfig,
-  body: { text: string; style?: string; lang?: string; footnote?: boolean; output?: string },
+  body: {
+    text: string;
+    style?: string;
+    lang?: string;
+    footnote?: boolean;
+    output?: string;
+  },
 ): Promise<ApiResult<FormatApiResponse>> {
   return callApi<FormatApiResponse>(config, "/api/format", { body });
 }
 
 export function formatItems(
   config: ResolvedConfig,
-  body: { items: unknown[]; style?: string; lang?: string; footnote?: boolean; output?: string },
+  body: {
+    items: unknown[];
+    style?: string;
+    lang?: string;
+    footnote?: boolean;
+    output?: string;
+  },
 ): Promise<ApiResult<FormatApiResponse>> {
   return callApi<FormatApiResponse>(config, "/api/format-items", { body });
 }
@@ -137,7 +172,9 @@ export function checkRetraction(
   config: ResolvedConfig,
   body: { id: string },
 ): Promise<ApiResult<RetractionApiResponse>> {
-  return callApi<RetractionApiResponse>(config, "/api/retraction-check", { body });
+  return callApi<RetractionApiResponse>(config, "/api/retraction-check", {
+    body,
+  });
 }
 
 export function checkOpenAccess(
@@ -149,7 +186,10 @@ export function checkOpenAccess(
 
 export function verifyCitation(
   config: ResolvedConfig,
-  body: { claimed: Record<string, unknown>; options?: { screen_with_llm?: boolean } },
+  body: {
+    claimed: Record<string, unknown>;
+    options?: { screen_with_llm?: boolean; semantic_title?: boolean };
+  },
 ): Promise<ApiResult<VerifyApiResponse>> {
   return callApi<VerifyApiResponse>(config, "/api/verify", { body });
 }
@@ -160,7 +200,11 @@ export function auditBibliography(
     bibliography?: string;
     format?: string;
     claims?: Array<Record<string, unknown>>;
-    options?: { screen_with_llm?: boolean; checks?: string[] };
+    options?: {
+      screen_with_llm?: boolean;
+      semantic_title?: boolean;
+      checks?: string[];
+    };
   },
 ): Promise<ApiResult<AuditApiResponse>> {
   return callApi<AuditApiResponse>(config, "/api/audit", { body });
@@ -170,10 +214,15 @@ export function listStyles(
   config: ResolvedConfig,
   query: Record<string, string | number | boolean | undefined>,
 ): Promise<ApiResult<StylesApiResponse>> {
-  return callApi<StylesApiResponse>(config, "/api/csl/styles", { method: "GET", query });
+  return callApi<StylesApiResponse>(config, "/api/csl/styles", {
+    method: "GET",
+    query,
+  });
 }
 
-export function health(config: ResolvedConfig): Promise<ApiResult<HealthApiResponse>> {
+export function health(
+  config: ResolvedConfig,
+): Promise<ApiResult<HealthApiResponse>> {
   return callApi<HealthApiResponse>(config, "/api/health", { method: "GET" });
 }
 
@@ -187,7 +236,11 @@ export async function openStream(
   if (warning) err(`Warning: ${warning}`);
   return fetch(`${config.baseUrl}/api/format/stream`, {
     method: "POST",
-    headers: { ...config.headers, "Content-Type": "application/json", "x-request-id": crypto.randomUUID() },
+    headers: {
+      ...config.headers,
+      "Content-Type": "application/json",
+      "x-request-id": crypto.randomUUID(),
+    },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(config.timeoutMs),
   });
